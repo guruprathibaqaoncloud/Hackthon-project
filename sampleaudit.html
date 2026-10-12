@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Audit Scores - Manager Save to Firestore</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px 12px;
+      text-align: center;
+    }
+    .variance {
+      font-weight: bold;
+    }
+    #saveScoresBtn {
+      margin-top: 15px;
+      padding: 8px 15px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Audit Scores</h1>
+
+<!-- Role switcher for demo -->
+<label for="roleSelect">Select Role:</label>
+<select id="roleSelect">
+  <option value="Member">Member</option>
+  <option value="Lead">Lead</option>
+  <option value="Manager" selected>Manager</option>
+</select>
+
+<!-- Project and Member selects -->
+<div style="margin-top: 15px;">
+  <label for="projectSelect">Project:</label>
+  <select id="projectSelect">
+    <option value="">--Select Project--</option>
+    <option value="Project A">Project A</option>
+    <option value="Project B">Project B</option>
+  </select>
+
+  <label for="memberSelect" style="margin-left: 20px;">Member:</label>
+  <select id="memberSelect">
+    <option value="">--Select Member--</option>
+    <option value="User1">User1</option>
+    <option value="User2">User2</option>
+  </select>
+</div>
+
+<table id="auditTable">
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>Target %</th>
+      <th>Achieved %</th>
+      <th>Variance</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+  <tfoot>
+    <tr>
+      <th>Total (Average)</th>
+      <th id="totalTarget">0%</th>
+      <th id="totalAchieved">0%</th>
+      <th id="totalVariance">0%</th>
+    </tr>
+  </tfoot>
+</table>
+
+<button id="saveScoresBtn" style="display:none;">Save Scores</button>
+
+<!-- Firebase scripts -->
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore-compat.js"></script>
+
+<script>
+  // Firebase config - replace with your actual config!
+  const firebaseConfig = {
+    apiKey: "AIzaSyAlG-Hpd_2VS_6lrmHGBmWihUTmgnCQPdE",
+    authDomain: "audit-tool-72987.firebaseapp.com",
+    projectId: "audit-tool-72987",
+    appId: "1:489308373004:web:230ac6910a27dcb920ee29"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const phases = [
+    "Requirement Phase", "Test Plan and Estimation", "Test Case Design", "Test Execution",
+    "Defect Reporting", "Test Metrics", "Status Reporting", "Team Training",
+    "Roles, Responsibilities & Feedbacks", "Meetings", "Test Closure", "Project Closure", "Others"
+  ];
+
+  let userRole = "Manager"; // default for demo
+
+  const tbody = document.querySelector("#auditTable tbody");
+  const saveBtn = document.getElementById("saveScoresBtn");
+
+  function loadAuditTable() {
+    tbody.innerHTML = "";
+    phases.forEach(phase => {
+      const tr = document.createElement("tr");
+
+      let targetCell, achievedCell;
+
+      if (userRole === "Manager") {
+        targetCell = `<input type="number" min="0" max="100" class="target-input" style="width:60px;">`;
+        achievedCell = `<input type="number" min="0" max="100" class="achieved-input" style="width:60px;">`;
+      } else {
+        targetCell = `<span class="target-static">0%</span>`;
+        achievedCell = `<span class="achieved-static">0%</span>`;
+      }
+
+      tr.innerHTML = `
+        <td>${phase}</td>
+        <td>${targetCell}</td>
+        <td>${achievedCell}</td>
+        <td class="variance">0%</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    saveBtn.style.display = userRole === "Manager" ? "inline-block" : "none";
+    calculateVariance();
+  }
+
+  function calculateVariance() {
+    let totalTarget = 0, totalAchieved = 0, rowCount = 0;
+
+    tbody.querySelectorAll("tr").forEach(tr => {
+      const targetInput = tr.querySelector(".target-input");
+      const achievedInput = tr.querySelector(".achieved-input");
+
+      const target = targetInput ? parseFloat(targetInput.value || 0) : 0;
+      const achieved = achievedInput ? parseFloat(achievedInput.value || 0) : 0;
+
+      const variance = achieved - target;
+
+      const varianceCell = tr.querySelector(".variance");
+      varianceCell.textContent = `${variance >= 0 ? "+" : ""}${variance}%`;
+      varianceCell.style.color = variance >= 0 ? "green" : "red";
+
+      totalTarget += target;
+      totalAchieved += achieved;
+      rowCount++;
+    });
+
+    const avgTarget = (totalTarget / rowCount).toFixed(1);
+    const avgAchieved = (totalAchieved / rowCount).toFixed(1);
+    const totalVariance = (avgAchieved - avgTarget).toFixed(1);
+
+    document.getElementById("totalTarget").textContent = `${avgTarget}%`;
+    document.getElementById("totalAchieved").textContent = `${avgAchieved}%`;
+    const totalVarEl = document.getElementById("totalVariance");
+    totalVarEl.textContent = `${totalVariance >= 0 ? "+" : ""}${totalVariance}%`;
+    totalVarEl.style.color = totalVariance >= 0 ? "green" : "red";
+  }
+
+  tbody.addEventListener("input", e => {
+    if (e.target.classList.contains("target-input") || e.target.classList.contains("achieved-input")) {
+      calculateVariance();
+    }
+  });
+
+  saveBtn.addEventListener("click", async () => {
+    const project = document.getElementById("projectSelect").value;
+    const member = document.getElementById("memberSelect").value;
+
+    if (!project) {
+      alert("Please select a Project.");
+      return;
+    }
+    if (!member) {
+      alert("Please select a Member.");
+      return;
+    }
+
+    let scores = [];
+    tbody.querySelectorAll("tr").forEach(tr => {
+      const phase = tr.querySelector("td").textContent.trim();
+      const targetInput = tr.querySelector(".target-input");
+      const achievedInput = tr.querySelector(".achieved-input");
+      const target = targetInput ? parseFloat(targetInput.value || 0) : 0;
+      const achieved = achievedInput ? parseFloat(achievedInput.value || 0) : 0;
+      scores.push({ phase, target, achieved });
+    });
+
+    try {
+      await db.collection("auditScores").add({
+        project,
+        member,
+        scores,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      alert("✅ Audit scores saved successfully!");
+    } catch (error) {
+      console.error("Error saving audit scores:", error);
+      alert("❌ Error saving audit scores: " + error.message);
+    }
+  });
+
+  // Role selector changes UI dynamically for demo
+  document.getElementById("roleSelect").addEventListener("change", e => {
+    userRole = e.target.value;
+    loadAuditTable();
+  });
+
+  // Initial load
+  loadAuditTable();
+</script>
+</body>
+</html>

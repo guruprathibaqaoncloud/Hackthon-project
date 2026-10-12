@@ -1,0 +1,82 @@
+<!-- Example Table -->
+<table border="1" id="userTable">
+    <thead>
+      <tr>
+        <th>Name</th><th>Email</th><th>Role</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Alice Brown</td>
+        <td>alice@example.com</td>
+        <td>Manager</td>
+        <td><button onclick="openEditUserModal(this)">Edit</button></td>
+      </tr>
+      <tr>
+        <td>Bob White</td>
+        <td>bob@example.com</td>
+        <td>Auditor</td>
+        <td><button onclick="openEditUserModal(this)">Edit</button></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <!-- Edit User Modal -->
+  <div id="editUserModal" style="
+    display:none;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:#fff;
+    padding:20px;
+    border:1px solid #ccc;
+    box-shadow:0 0 10px rgba(0,0,0,0.3);
+  ">
+    <h3>Edit User</h3>
+    <form id="editUserForm">
+      <label>Name:</label><br>
+      <input type="text" id="editUserName"><br><br>
+      
+      <label>Email:</label><br>
+      <input type="email" id="editUserEmail"><br><br>
+      
+      <label>Role:</label><br>
+      <input type="text" id="editUserRole"><br><br>
+      
+      <button type="submit">Save</button>
+      <button type="button" onclick="closeEditUserModal()">Cancel</button>
+    </form>
+  </div>
+  
+  <script>
+  let currentRow = null;
+  
+  function openEditUserModal(button) {
+    currentRow = button.closest('tr'); // store the row being edited
+    const cells = currentRow.getElementsByTagName('td');
+    
+    document.getElementById('editUserName').value = cells[0].textContent;
+    document.getElementById('editUserEmail').value = cells[1].textContent;
+    document.getElementById('editUserRole').value = cells[2].textContent;
+    
+    document.getElementById('editUserModal').style.display = 'block';
+  }
+  
+  function closeEditUserModal() {
+    document.getElementById('editUserModal').style.display = 'none';
+  }
+  
+  document.getElementById('editUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Update table row with new values
+    const cells = currentRow.getElementsByTagName('td');
+    cells[0].textContent = document.getElementById('editUserName').value;
+    cells[1].textContent = document.getElementById('editUserEmail').value;
+    cells[2].textContent = document.getElementById('editUserRole').value;
+    
+    closeEditUserModal();
+  });
+  </script>
+  

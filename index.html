@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal QA Audit Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .user-info {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1em;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .content-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .status-compliant {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .status-non-compliant {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .status-missing {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .score-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .score-item.total {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            background: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            margin-top: 10px;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            transition: width 0.3s ease;
+        }
+
+        .audit-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .audit-item h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .audit-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .log-entry {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #28a745;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .log-entry .timestamp {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .comment-thread {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .comment {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        .comment-author {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .comment-date {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .nav-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .score-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Internal QA Audit Tool</h1>
+            <div class="user-info">Welcome, QA Manager | Current Sprint: 2024-Q3-S1</div>
+        </div>
+
+        <div class="nav-menu">
+            <button class="nav-btn active" onclick="showSection('dashboard')">📊 Dashboard</button>
+            <button class="nav-btn" onclick="showSection('audit-management')">📋 Audit Management</button>
+            <button class="nav-btn" onclick="showSection('checklist')">✅ Checklist</button>
+            <button class="nav-btn" onclick="showSection('actions')">🎯 Actions</button>
+            <button class="nav-btn" onclick="showSection('feedback')">💬 Feedback</button>
+            <button class="nav-btn" onclick="showSection('audit-scores')">📈 Audit Scores</button>
+            <button class="nav-btn" onclick="showSection('qa-logs')">📝 QA Logs</button>
+            <button class="nav-btn" onclick="showSection('audit-history')">🕒 Audit History</button>
+            <button class="nav-btn" onclick="showSection('collaboration')">👥 Collaboration</button>
+        </div>
+
+        <div class="content-section">
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="section active">
+                <h2>📊 QA Manager Dashboard</h2>
+                <div class="dashboard-cards">
+                    <div class="card">
+                        <h3>85%</h3>
+                        <p>Overall Compliance Rate</p>
+                    </div>
+                    <div class="card">
+                        <h3>12</h3>
+                        <p>Active Audits</p>
+                    </div>
+                    <div class="card">
+                        <h3>7</h3>
+                        <p>Pending Actions</p>
+                    </div>
+                    <div class="card">
+                        <h3>3</h3>
+                        <p>Overdue Items</p>
+                    </div>
+                </div>
+
+                <h3>Top Non-Compliant Items</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Audit Item</th>
+                                <th>Frequency</th>
+                                <th>Impact</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Test case naming convention</td>
+                                <td>8 times</td>
+                                <td>Medium</td>
+                                <td><span class="status-non-compliant">Non-Compliant</span></td>
+                            </tr>
+                            <tr>
+                                <td>Peer review documentation</td>
+                                <td>5 times</td>
+                                <td>High</td>
+                                <td><span class="status-missing">Missing</span></td>
+                            </tr>
+                            <tr>
+                                <td>Regression test coverage</td>
+                                <td>3 times</td>
+                                <td>Critical</td>
+                                <td><span class="status-non-compliant">Non-Compliant</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Audit Management Section -->
+            <div id="audit-management" class="section">
+                <h2>📋 Audit Management</h2>
+                <button class="btn" onclick="showModal('createAuditModal')">+ Create New Audit</button>
+                <button class="btn btn-secondary" onclick="showModal('scheduleAuditModal')">📅 Schedule Audit</button>
+                <button class="btn btn-success" onclick="exportAudits()">📤 Export All Audits</button>
+
+                <h3>Current Audits</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Audit ID</th>
+                                <th>Type</th>
+                                <th>Assigned To</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Progress</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>AUD-2024-001</td>
+                                <td>Sprint QA Audit</td>
+                                <td>QA Lead 1</td>
+                                <td>2024-07-15</td>
+                                <td><span class="status-compliant">In Progress</span></td>
+                                <td>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 70%"></div>
+                                    </div>
+                                    70%
+                                </td>
+                                <td>
+                                    <button class="btn" onclick="viewAudit('AUD-2024-001')">View</button>
+                                    <button class="btn btn-secondary" onclick="editAudit('AUD-2024-001')">Edit</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>AUD-2024-002</td>
+                                <td>Regression Coverage</td>
+                                <td>QA Lead 2</td>
+                                <td>2024-07-20</td>
+                                <td><span class="status-non-compliant">Pending</span></td>
+                                <td>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 25%"></div>
+                                    </div>
+                                    25%
+                                </td>
+                                <td>
+                                    <button class="btn" onclick="viewAudit('AUD-2024-002')">View</button>
+                                    <button class="btn btn-secondary" onclick="editAudit('AUD-2024-002')">Edit</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Checklist Section -->
+            <div id="checklist" class="section">
+                <h2>✅ Audit Checklist</h2>
+                <div class="audit-controls">
+                    <button class="btn" onclick="submitChecklist()">✅ Submit Checklist</button>
+                    <button class="btn btn-secondary" onclick="saveAsDraft()">💾 Save as Draft</button>
+                    <button class="btn btn-success" onclick="exportToExcel()">📊 Export to Excel</button>
+                </div>
+
+                <h3>Sprint QA Audit Checklist</h3>
+                <div class="audit-item">
+                    <h4>Test cases created for all stories</h4>
+                    <div class="form-group">
+                        <label>Assigned To:</label>
+                        <select>
+                            <option>QA Engineer 1</option>
+                            <option>QA Engineer 2</option>
+                            <option>QA Engineer 3</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status:</label>
+                        <select>
+                            <option>Compliant</option>
+                            <option>Non-Compliant</option>
+                            <option>Missing</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Comments:</label>
+                        <textarea placeholder="Add comments...">All stories have test cases</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Evidence:</label>
+                        <div class="file-upload">
+                            <input type="file" accept=".xlsx,.pdf,.jpg,.png,.txt">
+                            📎 Upload Evidence
+                        </div>
+                    </div>
+                </div>
+
+                <div class="audit-item">
+                    <h4>Test case naming follows conventions</h4>
+                    <div class="form-group">
+                        <label>Assigned To:</label>
+                        <select>
+                            <option>QA Engineer 2</option>
+                            <option>QA Engineer 1</option>
+                            <option>QA Engineer 3</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status:</label>
+                        <select>
+                            <option>Non-Compliant</option>
+                            <option>Compliant</option>
+                            <option>Missing</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Comments:</label>
+                        <textarea placeholder="Add comments...">6 test cases use generic names</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Evidence:</label>
+                        <div class="file-upload">
+                            <input type="file" accept=".xlsx,.pdf,.jpg,.png,.txt">
+                            📎 Upload Evidence
+                        </div>
+                    </div>
+                </div>
+
+                <div class="audit-item">
+                    <h4>Regression test executed</h4>
+                    <div class="form-group">
+                        <label>Assigned To:</label>
+                        <select>
+                            <option>QA Engineer 3</option>
+                            <option>QA Engineer 1</option>
+                            <option>QA Engineer 2</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status:</label>
+                        <select>
+                            <option>Compliant</option>
+                            <option>Non-Compliant</option>
+                            <option>Missing</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Comments:</label>
+                        <textarea placeholder="Add comments...">Jenkins job ran on staging</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Evidence:</label>
+                        <div class="file-upload">
+                            <input type="file" accept=".xlsx,.pdf,.jpg,.png,.txt">
+                            📎 Upload Evidence
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Section -->
+            <div id="actions" class="section">
+                <h2>🎯 Action Items</h2>
+                <div class="audit-controls">
+                    <button class="btn" onclick="showModal('createActionModal')">+ Create New Action</button>
+                    <button class="btn btn-success" onclick="exportActions()">📤 Export Actions</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Action Item</th>
+                                <th>Assigned To</th>
+                                <th>Root Cause</th>
+                                <th>Due Date</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Update test case naming convention</td>
+                                <td>QA Engineer 2</td>
+                                <td>Lack of clear guidelines</td>
+                                <td>2024-07-10</td>
+                                <td>High</td>
+                                <td><span class="status-non-compliant">Open</span></td>
+                                <td>
+                                    <button class="btn" onclick="viewAction('ACT-001')">View</button>
+                                    <button class="btn btn-secondary" onclick="editAction('ACT-001')">Edit</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Implement peer review tracking</td>
+                                <td>QA Engineer 4</td>
+                                <td>Missing documentation process</td>
+                                <td>2024-07-12</td>
+                                <td>Critical</td>
+                                <td><span class="status-missing">In Progress</span></td>
+                                <td>
+                                    <button class="btn" onclick="viewAction('ACT-002')">View</button>
+                                    <button class="btn btn-secondary" onclick="editAction('ACT-002')">Edit</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Enhance regression test coverage</td>
+                                <td>QA Lead 1</td>
+                                <td>Incomplete test scenarios</td>
+                                <td>2024-07-15</td>
+                                <td>Medium</td>
+                                <td><span class="status-compliant">Closed</span></td>
+                                <td>
+                                    <button class="btn" onclick="viewAction('ACT-003')">View</button>
+                                    <button class="btn btn-secondary" onclick="editAction('ACT-003')">Edit</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Feedback Section -->
+            <div id="feedback" class="section">
+                <h2>💬 QA Feedback</h2>
+                <button class="btn" onclick="showModal('createFeedbackModal')">+ Give Feedback</button>
+
+                <h3>Recent Feedback</h3>
+                <div class="comment-thread">
+                    <div class="comment">
+                        <div class="comment-author">QA Manager</div>
+                        <div class="comment-date">July 3, 2024</div>
+                        <div class="comment-text">
+                            <strong>To: QA Engineer 1</strong><br>
+                            Excellent work on the test case documentation. The coverage is comprehensive and well-structured. Keep up the good work!
+                        </div>
+                    </div>
+                </div>
+
+                <div class="comment-thread">
+                    <div class="comment">
+                        <div class="comment-author">QA Manager</div>
+                        <div class="comment-date">July 2, 2024</div>
+                        <div class="comment-text">
+                            <strong>To: QA Engineer 2</strong><br>
+                            Please pay attention to the naming conventions. I've noticed inconsistencies in your recent test cases. Let's schedule a quick review session.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="comment-thread">
+                    <div class="comment">
+                        <div class="comment-author">QA Manager</div>
+                        <div class="comment-date">July 1, 2024</div>
+                        <div class="comment-text">
+                            <strong>To: QA Lead 1</strong><br>
+                            Great leadership on the regression testing initiative. The team coordination has significantly improved test coverage.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Scores Section -->
+            <div id="audit-scores" class="section">
+                <h2>📈 Audit Scores</h2>
+                <div class="form-group">
+                    <label>Select Project:</label>
+                    <select onchange="loadAuditScores(this.value)">
+                        <option value="project1">E-commerce Platform</option>
+                        <option value="project2">Mobile Banking App</option>
+                        <option value="project3">CRM System</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Phase</th>
+                                <th>Target Score</th>
+                                <th>Achieved Score</th>
+                                <th>Variance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Requirement Phase</td>
+                                <td>90%</td>
+                                <td>85%</td>
+                                <td><span class="status-non-compliant">-5%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Test Plan and Estimation</td>
+                                <td>95%</td>
+                                <td>92%</td>
+                                <td><span class="status-non-compliant">-3%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Test Case Design</td>
+                                <td>90%</td>
+                                <td>88%</td>
+                                <td><span class="status-non-compliant">-2%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Test Execution</td>
+                                <td>95%</td>
+                                <td>97%</td>
+                                <td><span class="status-compliant">+2%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Defect Reporting</td>
+                                <td>90%</td>
+                                <td>94%</td>
+                                <td><span class="status-compliant">+4%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Test Metrics</td>
+                                <td>85%</td>
+                                <td>80%</td>
+                                <td><span class="status-non-compliant">-5%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Status Reporting</td>
+                                <td>90%</td>
+                                <td>91%</td>
+                                <td><span class="status-compliant">+1%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Team Training</td>
+                                <td>80%</td>
+                                <td>75%</td>
+                                <td><span class="status-non-compliant">-5%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Roles, Responsibilities & Feedbacks</td>
+                                <td>85%</td>
+                                <td>87%</td>
+                                <td><span class="status-compliant">+2%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Meetings</td>
+                                <td>90%</td>
+                                <td>89%</td>
+                                <td><span class="status-non-compliant">-1%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Test Closure</td>
+                                <td>95%</td>
+                                <td>96%</td>
+                                <td><span class="status-compliant">+1%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Project Closure</td>
+                                <td>90%</td>
+                                <td>88%</td>
+                                <td><span class="status-non-compliant">-2%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Others</td>
+                                <td>85%</td>
+                                <td>83%</td>
+                                <td><span class="status-non-compliant">-2%</span></td>
+                            </tr>
+                            <tr style="background-color: #f0f0f0; font-weight: bold;">
+                                <td><strong>Total</strong></td>
+                                <td><strong>89%</strong></td>
+                                <td><strong>87%</strong></td>
+                                <td><strong><span class="status-non-compliant">-2%</span></strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- QA Logs Section -->
+            <div id="qa-logs" class="section">
+                <h2>📝 QA Logs</h2>
+                <div class="form-group">
+                    <label>Select Month:</label>
+                    <select onchange="loadQALogs(this.value)">
+                        <option value="2024-07">July 2024</option>
+                        <option value="2024-06">June 2024</option>
+                        <option value="2024-05">May 2024</option>
+                    </select>
+                </div>
+
+                <div class="dashboard-cards">
+                    <div class="card">
+                        <h3>1,247</h3>
+                        <p>Test Cases Executed</p>
+                    </div>
+                    <div class="card">
+                        <h3>89</h3>
+                        <p>Bugs Found</p>
+                    </div>
+                    <div class="card">
+                        <h3>78</h3>
+                        <p>Bugs Fixed</p>
+                    </div>
+                    <div class="card">
+                        <h3>94%</h3>
+                        <p>Test Pass Rate</p>
+                    </div>
+                </div>
+
+                <h3>Daily Activity Log</h3>
+                <div class="log-entry">
+                    <div class="timestamp">July 4, 2024 - 10:30 AM</div>
+                    <div><strong>QA Engineer 1:</strong> Executed 45 test cases for User Management module</div>
+                    <div>Found 3 critical bugs, 2 medium priority bugs</div>
+                </div>
+
+                <div class="log-entry">
+                    <div class="timestamp">July 4, 2024 - 09:15 AM</div>
+                    <div><strong>QA Engineer 2:</strong> Completed regression testing for Payment Gateway</div>
+                    <div>Executed 67 test cases, all passed</div>
+                </div>
+
+                <div class="log-entry">
+                    <div class="timestamp">July 3, 2024 - 04:45 PM</div>
+                    <div><strong>QA Engineer 3:</strong> Performed API testing for Order Management</div>
+                    <div>Executed 32 API test cases, found 1 high priority bug</div>
+                </div>
+            </div>
+
+            <!-- Audit History Section -->
+            <div id="audit-history" class="section">
+                <h2>🕒 Audit History & Logs</h2>
+                <div class="form-group">
+                    <label>Filter by Date Range:</label>
+                    <input type="date" value="2024-06-01">
+                    <input type="date" value="2024-07-04">
+                    <button class="btn" onclick="filterAuditHistory()">Filter</button>
+                </div>
+
+                <h3>Status Change History</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Audit ID</th>
+                                <th>Item</th>
+                                <th>Changed By</th>
+                                <th>Previous Status</th>
+                                <th>New Status</th>
+                                <th>Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2024-07-04 10:30</td>
+                                <td>AUD-2024-001</td>
+                                <td>Test case naming</td>
+                                <td>QA Engineer 2</td>
+                                <td>Non-Compliant</td>
+                                <td>In Progress</td>
+                                <td>Started fixing naming issues</td>
+                            </tr>
+                            <tr>
+                                <td>2024-07-03 14:15</td>
+                                <td>AUD-2024-001</td>
+                                <td>Regression testing</td>
+                                <td>QA Engineer 3</td>
+                                <td>Missing</td>
+                                <td>Compliant</td>
+                                <td>Completed with Jenkins logs</td>
+                            </tr>
+                            <tr>
+                                <td>2024-07-02 09:45</td>
+                                <td>AUD-2024-002</td>
+                                <td>Peer review documentation</td>
+                                <td>QA Lead 1</td>
+                                <td>Compliant</td>
+                                <td>Non-Compliant</td>
+                                <td>Missing review signatures</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Collaboration Section -->
+            <div id="collaboration" class="section">
+                <h2>👥 Comments & Collaboration</h2>
+                <div class="form-group">
+                    <label>Add New Comment:</label>
+                    <textarea id="newComment" placeholder="Type your comment here..."></textarea>
+                    <button class="btn" onclick="addComment()">💬 Add Comment</button>
+                </div>
+
+                <h3>Discussion Threads</h3>
+                <div class="comment-thread">
+                    <h4>Thread: Test Case Naming Convention Issues</h4>
+                    <div class="comment">
+                        <div class="comment-author">QA Manager</div>
+                        <div class="comment-date">July 4, 2024 - 10:00 AM</div>
+                        <div class="comment-text">
+                            We need to address the naming convention issues found in the recent audit. QA Engineer 2, please review the guidelines and update the affected test cases.
+                        </div>
+                    </div>
+                    <div class="comment">
+                        <div class="comment-author">QA Engineer 2</div>
+                        <div class="comment-date">July 4, 2024 - 10:30 AM</div>
+                        <div class="comment-text">
+                            Acknowledged. I'll review the guidelines and start updating the test cases today. Should have them completed by end of day.
+                        </div>
+                    </div>
+                    <div class="comment">
+                        <div class="comment-author">QA Lead 1</div>
+                        <div class="comment-date">July 4, 2024 - 11:00 AM</div>
+                        <div class="comment-text">
+                            I'll help with the review process. Let's schedule a quick meeting to ensure consistency across all test cases.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="comment-thread">
+                    <h4>Thread: Regression Testing Coverage</h4>
+                    <div class="comment">
+                        <div class="comment-author">QA Engineer 3</div>
+                        <div class="comment-date">July 3, 2024 - 2:00 PM</div>
+                        <div class="comment-text">
+                            Completed the regression testing for the current sprint. All tests passed successfully. Jenkins logs have been uploaded as evidence.
+                        </div>
+                    </div>
+                    <div class="comment">
+                        <div class="comment-author">QA Manager</div>
+                        <div class="comment-date">July 3, 2024 - 2:30 PM</div>
+                        <div class="comment-text">
+                            Excellent work! The coverage looks comprehensive. Please make sure to document any edge cases found during testing.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div id="createAuditModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('createAuditModal')">&times;</span>
+                <h2>Create New Audit</h2>
+                <div class="form-group">
+                    <label>Audit Type:</label>
+                    <select>
+                        <option>Sprint QA Audit</option>
+                        <option>Regression Coverage Audit</option>
+                        <option>Process Compliance Audit</option>
+                        <option>Custom Audit</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Audit Name:</label>
+                    <input type="text" placeholder="Enter audit name">
+                </div>
+                <div class="form-group">
+                    <label>Assigned To:</label>
+                    <select>
+                        <option>QA Lead 1</option>
+                        <option>QA Lead 2</option>
+                        <option>QA Engineer 1</option>
+                        <option>QA Engineer 2</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Due Date:</label>
+                    <input type="date">
+                </div>
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea placeholder="Enter audit description"></textarea>
+                </div>
+                <button class="btn" onclick="createAudit()">Create Audit</button>
+                <button class="btn btn-secondary" onclick="closeModal('createAuditModal')">Cancel</button>
+            </div>
+        </div>
+
+        <div id="createActionModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('createActionModal')">&times;</span>
+                <h2>Create New Action Item</h2>
+                <div class="form-group">
+                    <label>Action Item:</label>
+                    <input type="text" placeholder="Enter action item description">
+                </div>
+                <div class="form-group">
+                    <label>Assigned To:</label>
+                    <select>
+                        <option>QA Engineer 1</option>
+                        <option>QA Engineer 2</option>
+                        <option>QA Engineer 3</option>
+                        <option>QA Lead 1</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Root Cause:</label>
+                    <textarea placeholder="Enter root cause analysis"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Due Date:</label>
+                    <input type="date">
+                </div>
+                <div class="form-group">
+                    <label>Priority:</label>
+                    <select>
+                        <option>Critical</option>
+                        <option>High</option>
+                        <option>Medium</option>
+                        <option>Low</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="createAction()">Create Action</button>
+                <button class="btn btn-secondary" onclick="closeModal('createActionModal')">Cancel</button>
+            </div>
+        </div>
+
+        <div id="createFeedbackModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('createFeedbackModal')">&times;</span>
+                <h2>Give Feedback</h2>
+                <div class="form-group">
+                    <label>To:</label>
+                    <select>
+                        <option>QA Engineer 1</option>
+                        <option>QA Engineer 2</option>
+                        <option>QA Engineer 3</option>
+                        <option>QA Lead 1</option>
+                        <option>QA Lead 2</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Feedback Type:</label>
+                    <select>
+                        <option>Positive</option>
+                        <option>Constructive</option>
+                        <option>Improvement Required</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Feedback:</label>
+                    <textarea placeholder="Enter your feedback here..."></textarea>
+                </div>
+                <button class="btn" onclick="giveFeedback()">Submit Feedback</button>
+                <button class="btn btn-secondary" onclick="closeModal('createFeedbackModal')">Cancel</button>
+            </div>
+        </div>
+
+        <div id="scheduleAuditModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('scheduleAuditModal')">&times;</span>
+                <h2>Schedule Audit</h2>
+                <div class="form-group">
+                    <label>Audit Type:</label>
+                    <select>
+                        <option>Sprint QA Audit</option>
+                        <option>Monthly Review</option>
+                        <option>Quarterly Assessment</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Recurrence:</label>
+                    <select>
+                        <option>One-time</option>
+                        <option>Weekly</option>
+                        <option>Bi-weekly</option>
+                        <option>Monthly</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Start Date:</label>
+                    <input type="date">
+                </div>
+                <div class="form-group">
+                    <label>Assigned To:</label>
+                    <select>
+                        <option>QA Lead 1</option>
+                        <option>QA Lead 2</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="scheduleAudit()">Schedule Audit</button>
+                <button class="btn btn-secondary" onclick="closeModal('scheduleAuditModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = 'QA Manager';
+        let auditData = {};
+        let actionItems = [];
+        let feedbackData = [];
+
+        // Navigation function
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Show selected section
+            const activeSection = document.getElementById(sectionId);
+            if (activeSection) {
+                activeSection.classList.add('active');
+            }
+
+            // Update navigation buttons
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Find and activate the clicked button
+            const clickedButton = event.target;
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+        }
+
+        // Modal functions
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'block';
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
+        // Audit Management Functions
+        function createAudit() {
+            alert('New audit created successfully!');
+            closeModal('createAuditModal');
+        }
+
+        function viewAudit(auditId) {
+            alert('Viewing audit: ' + auditId);
+        }
+
+        function editAudit(auditId) {
+            alert('Editing audit: ' + auditId);
+        }
+
+        function exportAudits() {
+            alert('Exporting all audits to Excel...');
+        }
+
+        function scheduleAudit() {
+            alert('Audit scheduled successfully!');
+            closeModal('scheduleAuditModal');
+        }
+
+        // Checklist Functions
+        function submitChecklist() {
+            alert('Checklist submitted successfully!');
+        }
+
+        function saveAsDraft() {
+            alert('Checklist saved as draft!');
+        }
+
+        function exportToExcel() {
+            alert('Exporting checklist to Excel...');
+        }
+
+        // Action Functions
+        function createAction() {
+            alert('Action item created successfully!');
+            closeModal('createActionModal');
+        }
+
+        function viewAction(actionId) {
+            alert('Viewing action: ' + actionId);
+        }
+
+        function editAction(actionId) {
+            alert('Editing action: ' + actionId);
+        }
+
+        function exportActions() {
+            alert('Exporting actions to Excel...');
+        }
+
+        // Feedback Functions
+        function giveFeedback() {
+            alert('Feedback submitted successfully!');
+            closeModal('createFeedbackModal');
+        }
+
+        // Audit Scores Functions
+        function loadAuditScores(projectId) {
+            alert('Loading audit scores for project: ' + projectId);
+        }
+
+        // QA Logs Functions
+        function loadQALogs(month) {
+            alert('Loading QA logs for: ' + month);
+        }
+
+        // Audit History Functions
+        function filterAuditHistory() {
+            alert('Filtering audit history...');
+        }
+
+        // Collaboration Functions
+        function addComment() {
+            const commentText = document.getElementById('newComment').value;
+            if (commentText.trim()) {
+                alert('Comment added: ' + commentText);
+                document.getElementById('newComment').value = '';
+            } else {
+                alert('Please enter a comment');
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('QA Audit Tool initialized');
+            
+            // Set default active section
+            showSection('dashboard');
+            
+            // Add event listeners for file uploads
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(input => {
+                input.addEventListener('change', function(e) {
+                    const fileName = e.target.files[0]?.name;
+                    if (fileName) {
+                        alert('File uploaded: ' + fileName);
+                    }
+                });
+            });
+        });
+
+        // Utility functions
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString();
+        }
+
+        function calculateProgress(completed, total) {
+            return Math.round((completed / total) * 100);
+        }
+
+        function updateProgress(elementId, progress) {
+            const progressBar = document.querySelector(`#${elementId} .progress-fill`);
+            if (progressBar) {
+                progressBar.style.width = progress + '%';
+            }
+        }
+
+        // Sample data loading
+        function loadSampleData() {
+            // This would typically load from a backend API
+            console.log('Loading sample data...');
+        }
+    </script>
+</body>
+</html>
